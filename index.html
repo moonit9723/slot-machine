@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>격투게임 업그레이드 ⚔️</title>
+<title>2인용 격투게임 ⚔️</title>
 
 <style>
 body {
@@ -27,17 +27,26 @@ body {
     width: 60px;
     height: 100px;
     bottom: 0;
+    border-radius: 10px;
 }
 
-.player img {
-    width: 100%;
-    height: 100%;
+/* 캐릭터 디자인 */
+#p1 {
+    background: linear-gradient(red, darkred);
+    box-shadow: 0 0 15px red;
 }
 
+#p2 {
+    background: linear-gradient(blue, darkblue);
+    box-shadow: 0 0 15px blue;
+}
+
+/* 가드 */
 .guard {
-    filter: brightness(1.5) drop-shadow(0 0 10px cyan);
+    box-shadow: 0 0 20px cyan;
 }
 
+/* 공격 */
 .attack {
     filter: brightness(2);
 }
@@ -51,7 +60,7 @@ body {
 
 <body>
 
-<h1>⚔️ 격투게임 업그레이드</h1>
+<h1>⚔️ 2인용 격투게임</h1>
 
 <div class="health">
 🔴 P1: <span id="hp1">100</span>  
@@ -59,12 +68,8 @@ body {
 </div>
 
 <div id="game">
-    <div id="p1" class="player">
-        <img src="https://i.imgur.com/6X12Z9y.png">
-    </div>
-    <div id="p2" class="player">
-        <img src="https://i.imgur.com/4AiXzf8.png">
-    </div>
+    <div id="p1" class="player"></div>
+    <div id="p2" class="player"></div>
 </div>
 
 <script>
@@ -78,10 +83,10 @@ let hp2 = 100;
 let p1x = 100, p2x = 600;
 let p1y = 0, p2y = 0;
 
-// 속도
-let speed = 5;
+// 속도 (느리게 조정)
+let speed = 4;
 
-// 점프 상태
+// 점프
 let p1vy = 0, p2vy = 0;
 let gravity = -1;
 
@@ -89,7 +94,7 @@ let gravity = -1;
 let p1Guard = false;
 let p2Guard = false;
 
-// 키 상태 저장
+// 키 상태
 let keys = {};
 
 document.addEventListener("keydown", e => keys[e.key] = true);
@@ -100,10 +105,14 @@ document.addEventListener("keyup", e => {
     if (e.key === ".") p2.classList.remove("guard");
 });
 
+// 공격 쿨타임
+let p1Ready = true;
+let p2Ready = true;
+
 // 게임 루프
 function gameLoop() {
 
-    // 🔴 P1 이동
+    // 🔴 P1 이동 (WASD)
     if (keys["a"]) p1x -= speed;
     if (keys["d"]) p1x += speed;
 
@@ -123,7 +132,7 @@ function gameLoop() {
     // 공격
     if (keys["f"]) attackP1();
 
-    // 🔵 P2 이동
+    // 🔵 P2 이동 (방향키)
     if (keys["ArrowLeft"]) p2x -= speed;
     if (keys["ArrowRight"]) p2x += speed;
 
@@ -158,10 +167,7 @@ function gameLoop() {
     update();
 }
 
-// 공격 (쿨타임)
-let p1Ready = true;
-let p2Ready = true;
-
+// 🔴 공격
 function attackP1() {
     if (!p1Ready) return;
     p1Ready = false;
@@ -170,14 +176,15 @@ function attackP1() {
 
     let dist = Math.abs(p1x - p2x);
     if (dist < 80 && !p2Guard) {
-        hp2 -= 5;
+        hp2 -= 2;
         updateHP();
     }
 
     setTimeout(() => p1.classList.remove("attack"), 200);
-    setTimeout(() => p1Ready = true, 400);
+    setTimeout(() => p1Ready = true, 500);
 }
 
+// 🔵 공격
 function attackP2() {
     if (!p2Ready) return;
     p2Ready = false;
@@ -186,12 +193,12 @@ function attackP2() {
 
     let dist = Math.abs(p1x - p2x);
     if (dist < 80 && !p1Guard) {
-        hp1 -= 5;
+        hp1 -= 2;
         updateHP();
     }
 
     setTimeout(() => p2.classList.remove("attack"), 200);
-    setTimeout(() => p2Ready = true, 400);
+    setTimeout(() => p2Ready = true, 500);
 }
 
 // 위치 업데이트
@@ -221,7 +228,7 @@ function updateHP() {
     }
 }
 
-// 루프 실행
+// 실행
 setInterval(gameLoop, 30);
 </script>
 
