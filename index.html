@@ -2,136 +2,182 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>99 퍼즐 🧩</title>
+<title>격투 게임 ⚔️</title>
 
 <style>
 body {
-    text-align: center;
-    font-family: Arial;
     background: #111;
     color: white;
+    text-align: center;
+    font-family: Arial;
 }
 
 h1 {
     margin-top: 20px;
 }
 
-.grid {
-    width: 500px;
-    height: 500px;
-    margin: 20px auto;
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 3px;
-}
-
-.tile {
-    background: gold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-.empty {
+#game {
+    position: relative;
+    width: 800px;
+    height: 300px;
+    margin: 30px auto;
     background: #222;
-    cursor: default;
+    border: 3px solid white;
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    background: gold;
-    border: none;
+.player {
+    position: absolute;
+    width: 60px;
+    height: 100px;
+    bottom: 0;
     border-radius: 10px;
-    cursor: pointer;
+}
+
+#p1 {
+    background: red;
+    left: 50px;
+}
+
+#p2 {
+    background: blue;
+    right: 50px;
+}
+
+.health {
+    font-size: 20px;
+    margin: 10px;
+}
+
+.guard {
+    box-shadow: 0 0 20px cyan;
+}
+
+.attack {
+    background: yellow !important;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🧩 99 퍼즐 (10x10)</h1>
-<button onclick="shuffle()">🔀 섞기</button>
+<h1>⚔️ 격투 게임</h1>
 
-<div class="grid" id="grid"></div>
+<div class="health">
+❤️ 플레이어 체력: <span id="hp1">100</span>  
+❤️ 적 체력: <span id="hp2">100</span>
+</div>
+
+<div id="game">
+    <div id="p1" class="player"></div>
+    <div id="p2" class="player"></div>
+</div>
 
 <script>
-const size = 10;
-let tiles = [];
+let p1 = document.getElementById("p1");
+let p2 = document.getElementById("p2");
 
-// 초기 생성
-function init() {
-    tiles = [];
-    for (let i = 1; i < size*size; i++) {
-        tiles.push(i);
-    }
-    tiles.push(0); // 빈칸
-}
+let hp1 = 100;
+let hp2 = 100;
 
-function draw() {
-    const grid = document.getElementById("grid");
-    grid.innerHTML = "";
+let p1x = 50;
+let p2x = 690;
 
-    tiles.forEach((num, index) => {
-        const div = document.createElement("div");
-        div.classList.add("tile");
+let guarding = false;
 
-        if (num === 0) {
-            div.classList.add("empty");
+// 키 입력
+document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") p1x += 10;
+    if (e.key === "ArrowLeft") p1x -= 10;
+
+    if (e.key === "a") attack();
+    if (e.key === "s") guard(true);
+
+    update();
+});
+
+document.addEventListener("keyup", (e) => {
+    if (e.key === "s") guard(false);
+});
+
+// 공격
+function attack() {
+    p1.classList.add("attack");
+
+    let distance = Math.abs(p1x - p2x);
+
+    if (distance < 80) {
+        if (!p2.classList.contains("guard")) {
+            hp2 -= 10;
         } else {
-            div.innerText = num;
-            div.onclick = () => move(index);
+            hp2 -= 2; // 가드 시 데미지 감소
         }
-
-        grid.appendChild(div);
-    });
-}
-
-function move(index) {
-    const emptyIndex = tiles.indexOf(0);
-
-    const row = Math.floor(index / size);
-    const col = index % size;
-    const emptyRow = Math.floor(emptyIndex / size);
-    const emptyCol = emptyIndex % size;
-
-    const isAdjacent =
-        (row === emptyRow && Math.abs(col - emptyCol) === 1) ||
-        (col === emptyCol && Math.abs(row - emptyRow) === 1);
-
-    if (isAdjacent) {
-        [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
-        draw();
-        checkWin();
+        updateHP();
     }
+
+    setTimeout(() => p1.classList.remove("attack"), 200);
 }
 
-function shuffle() {
-    for (let i = 0; i < 2000; i++) {
-        let rand = Math.floor(Math.random() * tiles.length);
-        move(rand);
+// 가드
+function guard(on) {
+    guarding = on;
+    if (on) p1.classList.add("guard");
+    else p1.classList.remove("guard");
+}
+
+// 적 AI
+function enemyAI() {
+    // 플레이어 쪽으로 이동
+    if (p2x > p1x) p2x -= 5;
+    else p2x += 5;
+
+    // 랜덤 공격
+    if (Math.random() < 0.02) {
+        enemyAttack();
     }
+
+    update();
 }
 
-function checkWin() {
-    let correct = true;
-    for (let i = 0; i < tiles.length - 1; i++) {
-        if (tiles[i] !== i + 1) {
-            correct = false;
-            break;
+function enemyAttack() {
+    p2.classList.add("attack");
+
+    let distance = Math.abs(p1x - p2x);
+
+    if (distance < 80) {
+        if (!guarding) {
+            hp1 -= 10;
+        } else {
+            hp1 -= 2;
         }
+        updateHP();
     }
 
-    if (correct && tiles[tiles.length - 1] === 0) {
-        setTimeout(() => alert("🎉 클리어!"), 100);
+    setTimeout(() => p2.classList.remove("attack"), 200);
+}
+
+// 업데이트
+function update() {
+    p1.style.left = p1x + "px";
+    p2.style.left = p2x + "px";
+}
+
+// 체력 업데이트
+function updateHP() {
+    document.getElementById("hp1").innerText = hp1;
+    document.getElementById("hp2").innerText = hp2;
+
+    if (hp1 <= 0) {
+        alert("패배...");
+        location.reload();
+    }
+    if (hp2 <= 0) {
+        alert("승리!");
+        location.reload();
     }
 }
 
-init();
-draw();
+// 게임 루프
+setInterval(enemyAI, 50);
 </script>
 
 </body>
