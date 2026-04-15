@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>슬롯머신 🎰</title>
+<style>
+    body {
+        text-align: center;
+        background: #111;
+        color: white;
+        font-family: Arial;
+    }
+
+    h1 {
+        margin-top: 50px;
+    }
+
+    .slot {
+        font-size: 60px;
+        margin: 20px;
+    }
+
+    button {
+        padding: 15px 30px;
+        font-size: 20px;
+        background: gold;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+    }
+
+    button:hover {
+        background: orange;
+    }
+
+    #result {
+        margin-top: 20px;
+        font-size: 24px;
+    }
+</style>
+</head>
+<body>
+
+<h1>🎰 슬롯머신</h1>
+
+<div class="slot" id="slot1">🍒</div>
+<div class="slot" id="slot2">🍋</div>
+<div class="slot" id="slot3">🍇</div>
+
+<button onclick="spin()">돌리기</button>
+
+<div id="result"></div>
+
+<script>
+function spin() {
+    const items = ["🍒", "🍋", "🍇", "⭐", "💎"];
+
+    let s1 = items[Math.floor(Math.random() * items.length)];
+    let s2 = items[Math.floor(Math.random() * items.length)];
+    let s3 = items[Math.floor(Math.random() * items.length)];
+
+    document.getElementById("slot1").innerText = s1;
+    document.getElementById("slot2").innerText = s2;
+    document.getElementById("slot3").innerText = s3;
+
+    if (s1 === s2 && s2 === s3) {
+        document.getElementById("result").innerText = "🎉 잭팟!!!";
+    } else {
+        document.getElementById("result").innerText = "😢 꽝!";
+    }
+}
+</script>
+
+</body>
+</html>
