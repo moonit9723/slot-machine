@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>격투게임 PRO ⚔️</title>
+<title>격투게임 업그레이드 ⚔️</title>
 
 <style>
 body {
@@ -19,55 +19,27 @@ body {
     margin: 30px auto;
     background: #222;
     border: 3px solid white;
+    overflow: hidden;
 }
 
-/* 플레이어 */
 .player {
     position: absolute;
     width: 60px;
     height: 100px;
     bottom: 0;
-    border-radius: 10px;
 }
 
-/* 위치 고정 */
-#p1 { background: red; left: 200px; }
-#p2 { background: blue; left: 540px; }
-
-/* 무기 */
-.weapon {
-    position: absolute;
-    width: 20px;
-    height: 60px;
-    background: silver;
-    top: 20px;
-    transition: transform 0.2s;
+.player img {
+    width: 100%;
+    height: 100%;
 }
 
-/* P1 무기 */
-#p1 .weapon {
-    right: -20px;
-}
-
-/* P2 무기 */
-#p2 .weapon {
-    left: -20px;
-}
-
-/* 공격 모션 */
-.attack .weapon {
-    transform: rotate(90deg) translateY(-20px);
-    background: yellow;
-}
-
-/* 가드 모션 */
 .guard {
-    box-shadow: 0 0 20px cyan;
+    filter: brightness(1.5) drop-shadow(0 0 10px cyan);
 }
 
-.guard .weapon {
-    transform: rotate(-90deg);
-    background: cyan;
+.attack {
+    filter: brightness(2);
 }
 
 .health {
@@ -79,19 +51,19 @@ body {
 
 <body>
 
-<h1>⚔️ 격투게임 PRO</h1>
+<h1>⚔️ 격투게임 업그레이드</h1>
 
 <div class="health">
-🔴 P1 체력: <span id="hp1">100</span>  
-🔵 P2 체력: <span id="hp2">100</span>
+🔴 P1: <span id="hp1">100</span>  
+🔵 P2: <span id="hp2">100</span>
 </div>
 
 <div id="game">
     <div id="p1" class="player">
-        <div class="weapon"></div>
+        <img src="https://i.imgur.com/6X12Z9y.png">
     </div>
     <div id="p2" class="player">
-        <div class="weapon"></div>
+        <img src="https://i.imgur.com/4AiXzf8.png">
     </div>
 </div>
 
@@ -102,79 +74,140 @@ let p2 = document.getElementById("p2");
 let hp1 = 100;
 let hp2 = 100;
 
+// 위치
+let p1x = 100, p2x = 600;
+let p1y = 0, p2y = 0;
+
+// 속도
+let speed = 5;
+
+// 점프 상태
+let p1vy = 0, p2vy = 0;
+let gravity = -1;
+
+// 상태
 let p1Guard = false;
 let p2Guard = false;
 
-// 공격 쿨타임
+// 키 상태 저장
+let keys = {};
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => {
+    keys[e.key] = false;
+
+    if (e.key === "g") p1.classList.remove("guard");
+    if (e.key === ".") p2.classList.remove("guard");
+});
+
+// 게임 루프
+function gameLoop() {
+
+    // 🔴 P1 이동
+    if (keys["a"]) p1x -= speed;
+    if (keys["d"]) p1x += speed;
+
+    // 점프
+    if (keys["w"] && p1y === 0) {
+        p1vy = 15;
+    }
+
+    // 가드
+    if (keys["g"]) {
+        p1Guard = true;
+        p1.classList.add("guard");
+    } else {
+        p1Guard = false;
+    }
+
+    // 공격
+    if (keys["f"]) attackP1();
+
+    // 🔵 P2 이동
+    if (keys["ArrowLeft"]) p2x -= speed;
+    if (keys["ArrowRight"]) p2x += speed;
+
+    if (keys["ArrowUp"] && p2y === 0) {
+        p2vy = 15;
+    }
+
+    if (keys["."]) {
+        p2Guard = true;
+        p2.classList.add("guard");
+    } else {
+        p2Guard = false;
+    }
+
+    if (keys[","]) attackP2();
+
+    // 중력 적용
+    p1y += p1vy;
+    p1vy += gravity;
+    if (p1y < 0) {
+        p1y = 0;
+        p1vy = 0;
+    }
+
+    p2y += p2vy;
+    p2vy += gravity;
+    if (p2y < 0) {
+        p2y = 0;
+        p2vy = 0;
+    }
+
+    update();
+}
+
+// 공격 (쿨타임)
 let p1Ready = true;
 let p2Ready = true;
 
-// 키 입력
-document.addEventListener("keydown", (e) => {
-
-    // 🔴 P1
-    if (e.key === "f") attackP1();
-    if (e.key === "g") guardP1(true);
-
-    // 🔵 P2
-    if (e.key === ",") attackP2();
-    if (e.key === ".") guardP2(true);
-});
-
-document.addEventListener("keyup", (e) => {
-    if (e.key === "g") guardP1(false);
-    if (e.key === ".") guardP2(false);
-});
-
-// 🔴 P1 공격
 function attackP1() {
     if (!p1Ready) return;
-
     p1Ready = false;
+
     p1.classList.add("attack");
 
-    if (!p2Guard) {
-        hp2 -= 2;
+    let dist = Math.abs(p1x - p2x);
+    if (dist < 80 && !p2Guard) {
+        hp2 -= 5;
         updateHP();
     }
 
     setTimeout(() => p1.classList.remove("attack"), 200);
-
-    setTimeout(() => p1Ready = true, 500); // 0.5초 쿨타임
+    setTimeout(() => p1Ready = true, 400);
 }
 
-// 🔵 P2 공격
 function attackP2() {
     if (!p2Ready) return;
-
     p2Ready = false;
+
     p2.classList.add("attack");
 
-    if (!p1Guard) {
-        hp1 -= 2;
+    let dist = Math.abs(p1x - p2x);
+    if (dist < 80 && !p1Guard) {
+        hp1 -= 5;
         updateHP();
     }
 
     setTimeout(() => p2.classList.remove("attack"), 200);
-
-    setTimeout(() => p2Ready = true, 500);
+    setTimeout(() => p2Ready = true, 400);
 }
 
-// 가드
-function guardP1(on) {
-    p1Guard = on;
-    if (on) p1.classList.add("guard");
-    else p1.classList.remove("guard");
-}
+// 위치 업데이트
+function update() {
+    p1.style.left = p1x + "px";
+    p2.style.left = p2x + "px";
 
-function guardP2(on) {
-    p2Guard = on;
-    if (on) p2.classList.add("guard");
-    else p2.classList.remove("guard");
+    p1.style.bottom = p1y + "px";
+    p2.style.bottom = p2y + "px";
 }
 
 // 체력
 function updateHP() {
+    hp1 = Math.max(0, hp1);
+    hp2 = Math.max(0, hp2);
+
     document.getElementById("hp1").innerText = hp1;
     document.getElementById("hp2").innerText = hp2;
 
@@ -187,6 +220,9 @@ function updateHP() {
         location.reload();
     }
 }
+
+// 루프 실행
+setInterval(gameLoop, 30);
 </script>
 
 </body>
